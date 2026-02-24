@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JOHNNY TELECOM Billing Software</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f1f1f1;
+}
+
+/* LOGIN SCREEN */
+#loginScreen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: #111;
+}
+.login-box {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    width: 300px;
+    text-align: center;
+}
+.login-box h2 { margin-top: 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+.login-box input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+.login-box button { width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+.login-box button:hover { background: #0056b3; }
+.login-link { display: block; margin-top: 15px; color: #007bff; text-decoration: none; font-size: 14px; }
+.login-link:hover { text-decoration: underline; }
+
+/* MAIN APP CONTAINER */
+#appContainer {
+    display: none; 
+    width: 100%;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 220px;
+    background: #111;
+    color: white;
+    height: 100vh;
+    padding: 10px;
+    position: fixed;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+.sidebar button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 5px;
+    background: #333;
+    color: white;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-size: 15px;
+}
+.sidebar button:hover { background: #555; }
+
+/* MAIN */
+.main {
+    margin-left: 220px;
+    padding: 20px;
+    width: calc(100% - 220px);
+    box-sizing: border-box;
+}
+
+.card {
+    background: white;
+    padding: 15px;
+    display: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+.card.active { display: block; }
+
+input, select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.inline-inputs { display: flex; gap: 10px; align-items: center; }
+.inline-inputs > div { flex: 1; }
+
+button {
+    padding: 8px 12px;
+    border: none;
+    cursor: pointer;
+    background: #28a745;
+    color: white;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+}
+button:hover { opacity: 0.9; }
+
+.secondary { background: #007bff; }
+.danger { background: #dc3545; }
+.warning { background: #ffc107; color: black; font-weight: bold; }
+.edit-btn { background: #17a2b8; color: white; }
+.pdf-btn { background: #6c757d; color: white; }
+.excel-btn { background: #198754; color: white; font-weight: bold; }
+
+table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px; }
+table, th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+th { background-color: #f8f9fa; }
+
+/* REPORT DASHBOARD CARDS */
+.report-grid { display: flex; gap: 15px; margin-bottom: 20px; }
+.report-box { flex: 1; background: #f8f9fa; padding: 20px 15px; border-radius: 8px; text-align: center; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.report-box h3 { margin: 0 0 10px 0; color: #555; font-size: 1.1em; }
+.report-box p { margin: 0; font-size: 1.8em; font-weight: bold; color: #28a745; }
+.report-box.blue p { color: #007bff; }
+.report-box.dark p { color: #343a40; }
+
+/* SEARCH BAR */
+.search-bar { padding: 12px; font-size: 16px; border: 2px solid #007bff; border-radius: 5px; margin-bottom: 15px; flex: 1; }
+
+/* INVOICE PREVIEW */
+.invoice { width: 210mm; min-height: 297mm; background: white; padding: 20mm; margin: 20px auto; box-sizing: border-box; box-shadow: 0 0 10px rgba(0,0,0,0.2); position: relative; }
+.header { text-align: center; border: 1px solid black; padding: 10px; font-weight: bold; font-size: 1.4em; background: #f8f9fa; margin-bottom: 20px; }
+.footer { margin-top: 40px; display: flex; justify-content: space-between; border-top: 2px dashed #ccc; padding-top: 20px; }
+.qr { height: 120px; }
+
+/* SUMMARY BOX */
+.summary-box { background: #f8f9fa; padding: 15px; border: 1px solid #ddd; margin-bottom: 15px; border-radius: 5px; }
+.summary-row { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 8px; }
+.summary-label { width: 150px; text-align: right; font-weight: bold; margin-right: 15px; }
+
+/* PRINT SETTINGS */
+@media print {
+    @page { size: A4 portrait; margin: 0; }
+    body { background: white; }
+    body * { visibility: hidden; }
+    #previewBox, #previewBox * { visibility: visible; }
+    #previewBox { position: absolute; left: 0; top: 0; width: 100%; }
+    .invoice { margin: 0; box-shadow: none; border: none; }
+}
+</style>
+</head>
+
+<body>
+
+<div id="loginScreen">
+    <div class="login-box" id="loginForm">
+        <h2>🔒 Secure Login</h2>
+        <input type="text" id="loginId" placeholder="User ID">
+        <input type="password" id="loginPass" placeholder="Password">
+        <button onclick="doLogin()">Login</button>
+        <a href="#" class="login-link" onclick="toggleForgot(true)">Forgot Password?</a>
+    </div>
+
+    <div class="login-box" id="forgotForm" style="display: none;">
+        <h2>🔑 Password Recovery</h2>
+        <p style="font-size: 13px; color: gray;">Enter your 4-Digit Security PIN to reveal your password.</p>
+        <input type="password" id="recoverPin" placeholder="4-Digit PIN">
+        <button onclick="recoverPassword()" style="background: #17a2b8;">Recover Password</button>
+        <a href="#" class="login-link" onclick="toggleForgot(false)">Back to Login</a>
+    </div>
+</div>
+
+<div id="appContainer">
+    <div class="sidebar">
+        <h3 style="text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 5px;">JOHNNY TELECOM</h3>
+        <button onclick="openPage('dashboard')">📊 Dashboard</button>
+        <button onclick="openPage('invoice')">📝 Create Bill</button>
+        <button onclick="openPage('products')">📦 Products</button>
+        <button onclick="openPage('stock')">📋 Stock Levels</button>
+        <button onclick="openPage('history')">📂 Invoice History</button>
+        <button onclick="openPage('settings')">⚙️ Settings</button>
+        <button onclick="doLogout()" style="background: #dc3545; margin-top: 30px;">🚪 Logout</button>
+    </div>
+
+    <div class="main">
+        <div id="dashboard" class="card active">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #333;">Business Dashboard</h2>
+                <img id="dashLogo" style="height: 60px; display: none; object-fit: contain;">
+            </div>
+            
+            <h3 style="border-bottom: 2px solid #eee; padding-bottom: 5px;">Financial Reports</h3>
+            <div class="report-grid">
+                <div class="report-box"><h3>Today's Sales</h3><p id="dashTodaySales">₹0</p></div>
+                <div class="report-box"><h3>Today's Profit</h3><p id="dashTodayProfit">₹0</p></div>
+            </div>
+            <div class="report-grid">
+                <div class="report-box blue"><h3>All-Time Sales</h3><p id="dashTotalSales">₹0</p></div>
+                <div class="report-box blue"><h3>All-Time Profit</h3><p id="dashTotalProfit">₹0</p></div>
+            </div>
+
+            <h3 style="border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 30px;">System Overview</h3>
+            <div class="report-grid">
+                <div class="report-box dark"><h3>Total Customers</h3><p id="dashCustomers">0</p></div>
+                <div class="report-box dark"><h3>Total Invoices</h3><p id="dashInvoices">0</p></div>
+                <div class="report-box dark"><h3>Total Products</h3><p id="dashProducts">0</p></div>
+            </div>
+        </div>
+
+        <div id="invoice" class="card">
+            <h3 id="invoiceHeader" style="color: #007bff; margin-top: 0;">Create New Invoice</h3>
+            
+            <div class="inline-inputs">
+                <div>Mobile <input id="custMobile" placeholder="Enter 10-digit mobile"></div>
+                <div>Customer Name <input id="custName" placeholder="Customer Name"></div>
+            </div>
+            Address <input id="custAddress" placeholder="Customer Address">
+            
+            <hr style="margin: 15px 0;">
+            
+            Product / Service Name <input id="productInput" list="productDataList" oninput="autoFillRate()" placeholder="Select from list OR type a custom item...">
+            <datalist id="productDataList"></datalist>
+            
+            <div class="inline-inputs">
+                <div>Rate (₹) <input id="rate" type="number" min="0" placeholder="0.00"></div>
+                <div>Qty <input id="qty" type="number" value="1" min="1"></div>
+            </div>
+            
+            <button onclick="addItem()">Add Item</button>
+            
+            <table id="items">
+                <tr><th>#</th><th>Product</th><th>Qty</th><th>Rate</th><th>Total</th><th>Action</th></tr>
+            </table>
+            
+            <div class="summary-box">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <strong>Payment Mode: </strong><br>
+                        <select id="paymentMode" style="width: 150px; margin-top: 5px;">
+                            <option value="Cash">💵 Cash</option>
+                            <option value="UPI">📱 UPI</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <div class="summary-row">
+                            <div class="summary-label" style="font-size: 1.2em;">Sub Total:</div>
+                            <div style="font-size: 1.2em; width: 140px; text-align: right;">₹<span id="subTotal">0</span></div>
+                        </div>
+                        <div class="summary-row">
+                            <div class="summary-label" style="color: #28a745;">Received Amount:</div>
+                            <div style="display: flex; align-items: center; justify-content: flex-end; width: 140px;">
+                                <button class="secondary" onclick="autoFillFullAmount()" title="Fill Full Amount" style="padding: 4px 8px; font-size: 0.8em; margin: 0 5px 0 0;">Full</button>
+                                <input type="number" id="receivedAmt" oninput="calculateDue()" value="0" min="0" style="width: 80px; padding: 5px; margin: 0; text-align: right; border: 2px solid #28a745;">
+                            </div>
+                        </div>
+                        <div class="summary-row" style="border-top: 1px solid #ccc; padding-top: 8px; margin-top: 8px;">
+                            <div class="summary-label" style="font-size: 1.3em; color: #dc3545;">Due Balance:</div>
+                            <div style="font-size: 1.3em; width: 140px; text-align: right; color: #dc3545; font-weight: bold;">₹<span id="dueBalance">0</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="warning" onclick="saveBill()" style="font-size: 1.1em; padding: 12px 20px;">💾 Save Bill</button>
+            <button class="secondary" onclick="previewCurrent()">👁️ Preview Bill</button>
+            <button onclick="printCurrent()">🖨️ Print A4</button>
+            <button onclick="downloadCurrentPDF()">📄 Download PDF</button>
+            <button class="danger" onclick="clearInvoice()">🗑️ Clear Cart</button>
+        </div>
+
+        <div id="products" class="card">
+            <h3 style="margin-top: 0;">Manual Product Add / Delete</h3>
+            Name <input id="pname" placeholder="E.g., Screen Protector">
+            Cost Price (Your Buying Price) <input id="pcost" type="number" min="0" placeholder="0.00">
+            Selling Price (Customer Price) <input id="pprice" type="number" min="0" placeholder="0.00">
+            Stock <input id="pstock" type="number" min="0" placeholder="0">
+            <button onclick="addProduct()">Add Product</button>
+            
+            <table id="productTable"></table>
+        </div>
+
+        <div id="stock" class="card">
+            <h3 style="margin-top: 0;">Current Stock Levels</h3>
+            <table id="stockTable"></table>
+        </div>
+
+        <div id="history" class="card">
+            <h2 style="margin-top: 0;">Saved Invoice History</h2>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <input type="text" id="searchHistory" class="search-bar" style="margin:0;" onkeyup="filterHistory()" placeholder="🔍 Search by Invoice Number, Customer Name, or Mobile...">
+                <button class="excel-btn" onclick="exportToExcel()" style="padding: 12px 20px; font-size: 1em;">📊 Export to Excel</button>
+            </div>
+            <table id="historyTable"></table>
+        </div>
+
+        <div id="settings" class="card">
+            <h3 style="margin-top: 0;">Account Security</h3>
+            <div style="background: #fff3cd; padding: 15px; border-radius: 5px; border: 1px solid #ffeeba; margin-bottom: 20px;">
+                <div class="inline-inputs">
+                    <div>Login User ID <input id="secUserId"></div>
+                    <div>Login Password <input type="text" id="secPass"></div>
+                    <div>Security PIN (For Recovery) <input type="number" id="secPin" placeholder="4-digits"></div>
+                </div>
+                <button onclick="updateSecurity()" class="warning">Update Security Details</button>
+            </div>
+
+            <hr style="margin: 20px 0; border: 1px solid #ccc;">
+            <h3 style="margin-top: 0;">Store Settings</h3>
+            Company <input id="sname">
+            Address <input id="saddress">
+            Phone <input id="sphone">
+            
+            Logo <input type="file" accept="image/*" onchange="uploadLogo(event)">
+            <br><img id="logoPreview" height="60"><br><br>
+            
+            QR <input type="file" accept="image/*" onchange="uploadQR(event)">
+            <br><img id="qrPreview" height="120"><br><br>
+            
+            <button onclick="saveSettings()">Save Store Settings</button>
+            
+            <hr style="margin: 30px 0 20px 0; border: 1px solid #ccc;">
+            <h3 style="margin-top: 0; color: #d35400;">Data Backup & Restore</h3>
+            <p style="font-size: 0.9em; color: gray;">Save a backup file to your computer so you never lose your data. Upload that file here to restore your system on a new device.</p>
+            
+            <div style="display: flex; gap: 20px; align-items: center; background: #fff3cd; padding: 15px; border-radius: 5px; border: 1px solid #ffeeba;">
+                <div style="flex: 1;">
+                    <strong>1. Create Backup</strong><br>
+                    <button class="secondary" style="margin-top: 10px;" onclick="backupData()">⬇️ Download Backup File</button>
+                </div>
+                <div style="flex: 1; border-left: 1px solid #ffeeba; padding-left: 20px;">
+                    <strong>2. Restore Data</strong><br>
+                    <input type="file" id="restoreFile" accept=".json" onchange="restoreData(event)" style="margin-top: 10px;">
+                </div>
+            </div>
+        </div>
+
+        <div id="previewBox"></div>
+
+    </div>
+</div>
+
+<script>
+/* --- SECURITY & AUTHENTICATION --- */
+let auth = JSON.parse(localStorage.getItem("auth") || `{
+    "userId": "admin",
+    "password": "123",
+    "pin": "0000"
+}`);
+
+function checkAuth() {
+    let isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
+    if (isLoggedIn) {
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("appContainer").style.display = "flex";
+        loadAll(); 
+    } else {
+        document.getElementById("loginScreen").style.display = "flex";
+        document.getElementById("appContainer").style.display = "none";
+    }
+}
+
+function doLogin() {
+    let id = document.getElementById("loginId").value;
+    let pass = document.getElementById("loginPass").value;
+    
+    if (id === auth.userId && pass === auth.password) {
+        sessionStorage.setItem("isLoggedIn", "true");
+        document.getElementById("loginId").value = "";
+        document.getElementById("loginPass").value = "";
+        checkAuth();
+    } else {
+        alert("❌ Incorrect User ID or Password");
+    }
+}
+
+function doLogout() {
+    sessionStorage.removeItem("isLoggedIn");
+    checkAuth();
+}
+
+function toggleForgot(showForgot) {
+    document.getElementById("loginForm").style.display = showForgot ? "none" : "block";
+    document.getElementById("forgotForm").style.display = showForgot ? "block" : "none";
+    document.getElementById("recoverPin").value = "";
+}
+
+function recoverPassword() {
+    let pin = document.getElementById("recoverPin").value;
+    if (pin === auth.pin) {
+        alert(`✅ Recovery Successful!\n\nYour User ID is: ${auth.userId}\nYour Password is: ${auth.password}`);
+        toggleForgot(false);
+    } else {
+        alert("❌ Incorrect Security PIN");
+    }
+}
+
+function updateSecurity() {
+    let newId = document.getElementById("secUserId").value.trim();
+    let newPass = document.getElementById("secPass").value.trim();
+    let newPin = document.getElementById("secPin").value.trim();
+    
+    if(!newId || !newPass || !newPin) return alert("All security fields are required.");
+    
+    auth.userId = newId;
+    auth.password = newPass;
+    auth.pin = newPin;
+    localStorage.setItem("auth", JSON.stringify(auth));
+    alert("✅ Account Security Updated Successfully!");
+}
+
+
+/* --- DATABASES --- */
+let products = JSON.parse(localStorage.getItem("products") || "[]");
+let historyData = JSON.parse(localStorage.getItem("history") || "[]");
+let settings = JSON.parse(localStorage.getItem("settings") || `{
+    "name":"JOHNNY TELECOM",
+    "address":"Karandi, West Bengal",
+    "phone":"9932975517",
+    "logo":"",
+    "qr":""
+}`);
+let invoiceNumber = Number(localStorage.getItem("invoiceNumber")) || 1001;
+
+let totalAmount = 0; 
+let currentInvoiceItems = [];
+let editingInvoiceID = null;
+
+/* DATE & TIME HELPERS */
+function getFormattedDate(d) {
+    let dd = String(d.getDate()).padStart(2, '0');
+    let mm = String(d.getMonth() + 1).padStart(2, '0');
+    let yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+}
+function getFormattedTime(d) {
+    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
+/* SAVE DATABASE */
+function saveDB() {
+    localStorage.setItem("products", JSON.stringify(products));
+    localStorage.setItem("history", JSON.stringify(historyData));
+    localStorage.setItem("settings", JSON.stringify(settings));
+    localStorage.setItem("invoiceNumber", invoiceNumber);
+}
+
+/* NAVIGATION */
+function openPage(id) {
+    document.querySelectorAll(".card").forEach(x => x.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    document.getElementById("previewBox").innerHTML = ""; 
+    document.getElementById("searchHistory").value = "";
+    loadAll();
+}
+
+/* LOAD UI DATA */
+function loadAll() {
+    document.getElementById("secUserId").value = auth.userId;
+    document.getElementById("secPass").value = auth.password;
+    document.getElementById("secPin").value = auth.pin;
+
+    let pList = document.getElementById("productDataList");
+    pList.innerHTML = "";
+    products.forEach(p => {
+        let opt = document.createElement("option");
+        opt.value = p.name;
+        pList.appendChild(opt);
+    });
+
+    productTable.innerHTML = "<tr><th>Name</th><th>Cost Price</th><th>Sell Price</th><th>Stock</th><th>Action</th></tr>";
+    products.forEach((p, i) => {
+        let cp = p.costPrice || 0; 
+        productTable.innerHTML += `<tr><td>${p.name}</td><td>₹${cp}</td><td>₹${p.price}</td><td>${p.stock}</td>
+        <td><button class="danger" style="padding:5px 10px; margin:0;" onclick="deleteProduct(${i})">Delete</button></td></tr>`;
+    });
+
+    stockTable.innerHTML = "<tr><th>Name</th><th>Sell Price</th><th>Stock</th></tr>";
+    products.forEach(p => {
+        let color = p.stock <= 5 ? "red" : "green";
+        stockTable.innerHTML += `<tr><td>${p.name}</td><td>₹${p.price}</td><td style="color:${color}; font-weight:bold;">${p.stock}</td></tr>`;
+    });
+
+    generateReports();
+
+    sname.value = settings.name;
+    saddress.value = settings.address;
+    sphone.value = settings.phone;
+    
+    let dashLogo = document.getElementById("dashLogo");
+    if (settings.logo) {
+        logoPreview.src = settings.logo;
+        dashLogo.src = settings.logo;
+        dashLogo.style.display = "block"; 
+    } else {
+        dashLogo.style.display = "none";
+    }
+    
+    if (settings.qr) qrPreview.src = settings.qr;
+}
+
+/* GENERATE REPORTS & HISTORY */
+function generateReports() {
+    let d = new Date();
+    let formattedToday = getFormattedDate(d);
+    let standardToday = d.toLocaleDateString(); 
+    
+    let todaySales = 0, todayProfit = 0, totalSales = 0, totalProfit = 0;
+    let uniqueCustomers = new Set();
+
+    historyTable.innerHTML = "<tr><th>Inv #</th><th>Date</th><th>Customer</th><th>Total & Payment</th><th>Action</th></tr>";
+    
+    let sortedHistory = historyData.slice().sort((a, b) => a.invoice - b.invoice).reverse();
+    
+    sortedHistory.forEach(h => {
+        totalSales += h.total;
+        totalProfit += h.profit || 0;
+        
+        let rowDate = h.dateOnly || h.date.split(',')[0];
+        if(rowDate === formattedToday || rowDate === standardToday) {
+            todaySales += h.total;
+            todayProfit += h.profit || 0;
+        }
+
+        if(h.mobile && h.mobile.trim() !== "") {
+            uniqueCustomers.add(h.mobile);
+        } else if(h.customer && h.customer !== "Walk-in Customer" && h.customer !== "Walk-in" && h.customer.trim() !== "") {
+            uniqueCustomers.add(h.customer.toLowerCase());
+        }
+
+        // --- HISTORY TABLE UI ---
+        let customerText = h.customer || "Walk-in";
+        if(h.mobile) customerText += ` <br><small style="color:gray;">${h.mobile}</small>`;
+        
+        let payModeText = h.paymentMode || "Cash"; 
+        let payColor = payModeText === "UPI" ? "blue" : "green";
+        let dueAmount = h.due || 0;
+        let dueBadge = dueAmount > 0 ? `<br><small style="color:#dc3545; font-weight:bold;">Due: ₹${dueAmount}</small>` : "";
+        let settleBtn = dueAmount > 0 ? `<button class="warning" onclick="payDue(${h.invoice}, ${dueAmount})" style="padding: 5px; margin-bottom: 5px; width: 100%;">💰 Pay Due</button><br>` : "";
+        
+        let displayDate = h.dateOnly || h.date.split(',')[0];
+        let displayTime = h.timeOnly || "";
+        if(!displayTime && h.date.includes(',')) displayTime = h.date.split(',')[1].trim();
+
+        historyTable.innerHTML += `<tr>
+            <td><strong>#${h.invoice}</strong></td>
+            <td>${displayDate}<br><small style="color:gray;">${displayTime}</small></td>
+            <td>${customerText}</td>
+            <td>₹${h.total}<br><small style="color:${payColor};">(${payModeText})</small>${dueBadge}</td>
+            <td>
+                ${settleBtn}
+                <button class="edit-btn" onclick="editInvoice(${h.invoice})" style="padding:4px 8px;">✏️</button>
+                <button class="secondary" onclick="printPast(${h.invoice})" style="padding:4px 8px;">🖨️</button>
+                <button class="pdf-btn" onclick="pdfPast(${h.invoice})" style="padding:4px 8px;">📄</button>
+                <button class="danger" onclick="deletePastInvoice(${h.invoice})" style="padding:4px 8px;">🗑️</button>
+            </td>
+        </tr>`;
+    });
+
+    document.getElementById("dashTodaySales").innerText = "₹" + todaySales;
+    document.getElementById("dashTodayProfit").innerText = "₹" + todayProfit;
+    document.getElementById("dashTotalSales").innerText = "₹" + totalSales;
+    document.getElementById("dashTotalProfit").innerText = "₹" + totalProfit;
+    
+    document.getElementById("dashProducts").innerText = products.length;
+    document.getElementById("dashInvoices").innerText = historyData.length;
+    document.getElementById("dashCustomers").innerText = uniqueCustomers.size;
+}
+
+/* EXPORT HISTORY TO PERFECT EXCEL FILE */
+function exportToExcel() {
+    if(historyData.length === 0) return alert("No sales history to export.");
+    
+    let csv = "Invoice No,Date,Time,Customer Name,Mobile,Items Sold,Sub Total,Received,Due Balance,Payment Mode,Profit\n";
+    
+    historyData.forEach(h => {
+        let cust = h.customer ? h.customer.replace(/,/g, "") : "Walk-in";
+        let mob = h.mobile || "";
+        let dDate = h.dateOnly || h.date.split(',')[0];
+        let dTime = h.timeOnly || "";
+        
+        let itemsStr = "N/A";
+        if(h.items && h.items.length > 0){
+            itemsStr = h.items.map(i => `${i.qty}x ${i.name.replace(/,/g, '')}`).join(" | ");
+        }
+        
+        csv += `${h.invoice},${dDate},${dTime},${cust},${mob},${itemsStr},${h.total},${h.received !== undefined ? h.received : h.total},${h.due || 0},${h.paymentMode || 'Cash'},${h.profit || 0}\n`;
+    });
+
+    let blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+    let url = URL.createObjectURL(blob);
+    let link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `JohnnyTelecom_SalesReport_${getFormattedDate(new Date()).replace(/\//g, "-")}.csv`);
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+
+/* PAY PENDING DUE ON OLD INVOICE */
+function payDue(invNum, currentDue) {
+    let amtStr = prompt(`Outstanding Due for Invoice #${invNum}: ₹${currentDue}\n\nEnter the amount you are receiving now:`, currentDue);
+    if (amtStr === null || amtStr.trim() === "") return; 
+    let amt = Number(amtStr);
+    if (isNaN(amt) || amt <= 0) return alert("Please enter a valid amount greater than 0.");
+    
+    let h = historyData.find(x => x.invoice === invNum);
+    if (h) {
+        h.received = (h.received || 0) + amt;
+        h.due = h.total - h.received; 
+        saveDB(); loadAll(); alert(`Payment of ₹${amt} successfully recorded!`);
+    }
+}
+
+function filterHistory() {
+    let input = document.getElementById("searchHistory").value.toLowerCase();
+    let tr = historyTable.getElementsByTagName("tr");
+    for (let i = 1; i < tr.length; i++) { 
+        let tdInv = tr[i].getElementsByTagName("td")[0];
+        let tdCust = tr[i].getElementsByTagName("td")[2];
+        if (tdInv || tdCust) {
+            let txtInv = tdInv.textContent || tdInv.innerText;
+            let txtCust = tdCust.textContent || tdCust.innerText;
+            tr[i].style.display = (txtInv.toLowerCase().indexOf(input) > -1 || txtCust.toLowerCase().indexOf(input) > -1) ? "" : "none";
+        }
+    }
+}
+
+function editInvoice(invNum) {
+    let hIndex = historyData.findIndex(x => x.invoice === invNum);
+    if (hIndex === -1) return alert("Invoice not found.");
+    let h = historyData[hIndex];
+
+    if (!h.items || h.items.length === 0) return alert("Error: No items found in this old invoice format. Cannot edit.");
+    if (!confirm(`Are you sure you want to Edit Invoice #${invNum}?\n\nThis will refund the stock, delete it from history, and move it back to the cart.`)) return;
+
+    h.items.forEach(i => {
+        let p = products.find(x => x.name === i.name);
+        if (p) { p.stock += i.qty; }
+    });
+
+    custName.value = h.customer || "";
+    custMobile.value = h.mobile || "";
+    custAddress.value = h.address || "";
+    document.getElementById("paymentMode").value = h.paymentMode || "Cash";
+    document.getElementById("receivedAmt").value = h.received !== undefined ? h.received : h.total; 
+    
+    currentInvoiceItems = JSON.parse(JSON.stringify(h.items)); 
+    editingInvoiceID = h.invoice; 
+
+    document.getElementById("invoiceHeader").innerText = `✏️ Editing Invoice #${editingInvoiceID}`;
+    document.getElementById("invoiceHeader").style.color = "#dc3545"; 
+
+    historyData.splice(hIndex, 1);
+    saveDB();
+    openPage('invoice');
+    renderInvoiceItems();
+}
+
+function deletePastInvoice(invNum) {
+    let hIndex = historyData.findIndex(x => x.invoice === invNum);
+    if (hIndex === -1) return alert("Invoice not found.");
+    let h = historyData[hIndex];
+
+    if (!confirm(`Are you sure you want to permanently DELETE Invoice #${invNum}?\n\nThe items will be returned to your stock and the sale will be removed from your reports. This action cannot be undone.`)) return;
+
+    if (h.items) {
+        h.items.forEach(i => {
+            let p = products.find(x => x.name === i.name);
+            if (p) { p.stock += i.qty; }
+        });
+    }
+
+    historyData.splice(hIndex, 1);
+    saveDB(); loadAll();
+    alert(`Invoice #${invNum} has been permanently deleted.`);
+}
+
+function autoFillRate() {
+    let name = document.getElementById("productInput").value;
+    let p = products.find(x => x.name === name);
+    if(p) { document.getElementById("rate").value = p.price; }
+}
+
+function addProduct() {
+    let name = pname.value.trim();
+    let costPrice = Number(pcost.value);
+    let price = Number(pprice.value);
+    let stock = Number(pstock.value);
+
+    if (!name || price <= 0 || stock < 0 || costPrice < 0) return alert("Enter valid product details.");
+    products.push({ name, costPrice, price, stock });
+    pname.value = ""; pcost.value = ""; pprice.value = ""; pstock.value = "";
+    saveDB(); loadAll();
+}
+
+function deleteProduct(index) {
+    if(confirm("Delete this product?")) { products.splice(index, 1); saveDB(); loadAll(); }
+}
+
+function addItem() {
+    let name = document.getElementById("productInput").value.trim();
+    if (!name) return alert("Please type or select a Product Name.");
+    
+    let rateInput = document.getElementById("rate").value;
+    if (rateInput === "") return alert("Please enter a Rate.");
+    
+    let r = Number(rateInput);
+    let q = Number(qty.value);
+
+    if (q <= 0 || r < 0) return alert("Invalid Qty or Rate.");
+
+    let p = products.find(x => x.name === name);
+    let cp = 0;
+
+    if (p) {
+        if (q > p.stock) alert(`Warning: Only ${p.stock} left in stock for ${name}!`);
+        cp = p.costPrice || 0;
+    }
+
+    let t = r * q; 
+    let totalCost = cp * q;
+
+    currentInvoiceItems.push({ name, qty: q, costPrice: cp, price: r, total: t, totalCost: totalCost });
+    
+    document.getElementById("productInput").value = "";
+    document.getElementById("rate").value = "";
+    qty.value = 1; 
+    
+    renderInvoiceItems();
+}
+
+function renderInvoiceItems() {
+    items.innerHTML = `<tr><th>#</th><th>Product</th><th>Qty</th><th>Rate</th><th>Total</th><th>Action</th></tr>`;
+    totalAmount = 0;
+
+    currentInvoiceItems.forEach((item, index) => {
+        totalAmount += item.total;
+        items.innerHTML += `<tr>
+            <td>${index + 1}</td>
+            <td>${item.name}</td>
+            <td>${item.qty}</td>
+            <td>₹${item.price}</td>
+            <td>₹${item.total}</td>
+            <td><button class="danger" style="padding:5px 10px; margin:0;" onclick="removeItem(${index})">X</button></td>
+        </tr>`;
+    });
+    
+    document.getElementById("subTotal").innerText = totalAmount;
+    calculateDue();
+}
+
+function removeItem(index) {
+    currentInvoiceItems.splice(index, 1);
+    renderInvoiceItems();
+}
+
+function calculateDue() {
+    let received = Number(document.getElementById("receivedAmt").value) || 0;
+    let due = totalAmount - received;
+    document.getElementById("dueBalance").innerText = due;
+}
+
+function autoFillFullAmount() {
+    document.getElementById("receivedAmt").value = totalAmount;
+    calculateDue();
+}
+
+function saveBill() {
+    if (currentInvoiceItems.length === 0) return alert("Add items first!");
+
+    let cName = custName.value.trim() || "Walk-in Customer";
+    let cMob = custMobile.value.trim();
+    let cAdd = custAddress.value.trim();
+    let payMode = document.getElementById("paymentMode").value; 
+    
+    let receivedAmount = Number(document.getElementById("receivedAmt").value) || 0;
+    let dueAmount = totalAmount - receivedAmount;
+
+    let billTotalCost = 0;
+    currentInvoiceItems.forEach(i => billTotalCost += i.totalCost);
+    let billProfit = totalAmount - billTotalCost;
+
+    currentInvoiceItems.forEach(i => {
+        let p = products.find(x => x.name === i.name);
+        if (p) { p.stock -= i.qty; if (p.stock < 0) p.stock = 0; }
+    });
+
+    let finalInvoiceNumber = editingInvoiceID ? editingInvoiceID : invoiceNumber;
+    let fullDate = new Date();
+    let fDate = getFormattedDate(fullDate);
+    let fTime = getFormattedTime(fullDate);
+
+    historyData.push({
+        invoice: finalInvoiceNumber,
+        customer: cName,
+        mobile: cMob,
+        address: cAdd,
+        total: totalAmount,
+        received: receivedAmount,
+        due: dueAmount,
+        paymentMode: payMode, 
+        cost: billTotalCost,
+        profit: billProfit,
+        dateOnly: fDate,
+        timeOnly: fTime,
+        date: fDate + " " + fTime, 
+        items: JSON.parse(JSON.stringify(currentInvoiceItems))
+    });
+
+    if (editingInvoiceID) {
+        editingInvoiceID = null;
+        document.getElementById("invoiceHeader").innerText = `Create New Invoice`;
+        document.getElementById("invoiceHeader").style.color = "#007bff";
+    } else {
+        invoiceNumber++; 
+    }
+
+    saveDB();
+    alert(`Bill Saved Successfully!`);
+    clearInvoice();
+    loadAll();
+}
+
+function clearInvoice() {
+    if (editingInvoiceID) {
+        if(!confirm("WARNING: You are editing an old invoice. Clearing the cart will DELETE this invoice forever. Are you sure?")) return;
+        editingInvoiceID = null;
+        document.getElementById("invoiceHeader").innerText = `Create New Invoice`;
+        document.getElementById("invoiceHeader").style.color = "#007bff";
+    }
+
+    currentInvoiceItems = [];
+    renderInvoiceItems();
+    custName.value = ""; custMobile.value = ""; custAddress.value = "";
+    document.getElementById("productInput").value = ""; document.getElementById("rate").value = "";
+    document.getElementById("paymentMode").value = "Cash"; 
+    document.getElementById("receivedAmt").value = "0"; 
+    document.getElementById("dueBalance").innerText = "0";
+    previewBox.innerHTML = "";
+}
+
+function generateInvoiceHTML(invNumber, cName, cMob, cAdd, billDate, billTime, itemsArray, finalTotal, payMode, recAmt, dueAmt) {
+    let rows = "";
+    itemsArray.forEach((i, index) => {
+        rows += `<tr>
+            <td>${index + 1}</td>
+            <td style="text-align: left;">${i.name}</td>
+            <td>${i.qty}</td>
+            <td>₹${i.price}</td>
+            <td>₹${i.total}</td>
+        </tr>`;
+    });
+
+    let logoHtml = settings.logo ? `<img src="${settings.logo}" height="60">` : ``;
+    let qrHtml = settings.qr ? `<img src="${settings.qr}" class="qr"><br>Scan to Pay` : ``;
+    let dueColor = dueAmt > 0 ? "#dc3545" : "#000";
+
+    return `
+    <div class="invoice" id="invoiceContent">
+        <div class="header">TAX INVOICE</div>
+        <div style="display:flex;align-items:center;">
+            <div style="width:25%">${logoHtml}</div>
+            <div style="width:50%;text-align:center;">
+                <h2 style="margin:5px 0;">${settings.name}</h2>
+                ${settings.address}<br>Ph: ${settings.phone}
+            </div>
+            <div style="width:25%;text-align:right;">
+                <strong>Date:</strong> ${billDate}<br>
+                <strong>Time:</strong> ${billTime}<br>
+                <strong>Invoice No:</strong> ${invNumber}<br>
+                <strong>Payment:</strong> ${payMode}
+            </div>
+        </div>
+        <hr style="margin: 20px 0;">
+        <div style="margin-bottom: 20px;">
+            <strong>Billed To:</strong><br>
+            Name: ${cName || 'N/A'}<br>
+            Mobile: ${cMob || 'N/A'}<br>
+            Address: ${cAdd || 'N/A'}
+        </div>
+        <table style="margin-bottom: 20px;">
+            <tr style="background-color: #f8f9fa;">
+                <th>#</th><th style="text-align: left;">Item Description</th><th>Qty</th><th>Rate</th><th>Amount</th>
+            </tr>
+            ${rows}
+        </table>
+        
+        <div style="text-align: right; border-top: 2px solid #000; padding-top: 10px;">
+            <h3 style="margin: 0 0 5px 0; color: #555;">Sub Total: ₹${finalTotal}</h3>
+            <h3 style="margin: 0 0 5px 0; color: #28a745;">Received: ₹${recAmt}</h3>
+            <h2 style="margin: 0; color: ${dueColor};">Due Balance: ₹${dueAmt}</h2>
+        </div>
+        
+        <div class="footer">
+            <div style="width: 33%; text-align: left;">${qrHtml}</div>
+            <div style="width: 33%; text-align: center; color: #555; font-size: 0.9em; padding-top: 50px;">Thank you for your business!</div>
+            <div style="width: 33%; text-align: right; padding-top: 50px;"><strong>Authorized Signature</strong><br>_______________________</div>
+        </div>
+    </div>`;
+}
+
+function previewCurrent() {
+    if (currentInvoiceItems.length === 0) return alert("Add items to preview bill.");
+    let invNumToPrint = editingInvoiceID ? editingInvoiceID : invoiceNumber;
+    let currentPayMode = document.getElementById("paymentMode").value;
+    let currentRec = Number(document.getElementById("receivedAmt").value) || 0;
+    let currentDue = totalAmount - currentRec;
+    
+    let now = new Date();
+    previewBox.innerHTML = generateInvoiceHTML(
+        invNumToPrint, custName.value, custMobile.value, custAddress.value, 
+        getFormattedDate(now), getFormattedTime(now), currentInvoiceItems, totalAmount, currentPayMode, currentRec, currentDue
+    );
+}
+function printCurrent() { previewCurrent(); if(previewBox.innerHTML !== "") window.print(); }
+function downloadCurrentPDF() {
+    previewCurrent();
+    let invNumToPrint = editingInvoiceID ? editingInvoiceID : invoiceNumber;
+    if(document.getElementById('invoiceContent')) {
+        let opt = { margin: 0, filename: `Invoice_${invNumToPrint}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }};
+        html2pdf().set(opt).from(document.getElementById('invoiceContent')).save();
+    }
+}
+
+function getPastInvoiceHTML(invNum) {
+    let h = historyData.find(x => x.invoice === invNum);
+    if(!h || !h.items) { alert("Detailed item data not found for this older invoice."); return null; }
+    
+    let payMode = h.paymentMode || "Cash";
+    let recAmt = h.received !== undefined ? h.received : h.total; 
+    let dueAmt = h.due !== undefined ? h.due : 0;
+    
+    let bTime = h.timeOnly || "";
+    if(!bTime && h.date.includes(',')) bTime = h.date.split(',')[1].trim();
+    
+    return generateInvoiceHTML(h.invoice, h.customer, h.mobile, h.address, h.dateOnly, bTime, h.items, h.total, payMode, recAmt, dueAmt);
+}
+function printPast(invNum) {
+    let html = getPastInvoiceHTML(invNum);
+    if(html) {
+        previewBox.innerHTML = html;
+        window.print();
+        setTimeout(() => previewBox.innerHTML = "", 1000); 
+    }
+}
+function pdfPast(invNum) {
+    let html = getPastInvoiceHTML(invNum);
+    if(html) {
+        previewBox.innerHTML = html;
+        let opt = { margin: 0, filename: `Saved_Invoice_${invNum}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }};
+        html2pdf().set(opt).from(document.getElementById('invoiceContent')).save().then(() => {
+            previewBox.innerHTML = ""; 
+        });
+    }
+}
+
+function uploadLogo(e) { let r = new FileReader(); r.onload = function() { settings.logo = r.result; saveDB(); loadAll(); }; if (e.target.files[0]) r.readAsDataURL(e.target.files[0]); }
+function uploadQR(e) { let r = new FileReader(); r.onload = function() { settings.qr = r.result; saveDB(); loadAll(); }; if (e.target.files[0]) r.readAsDataURL(e.target.files[0]); }
+function saveSettings() { settings.name = sname.value; settings.address = saddress.value; settings.phone = sphone.value; saveDB(); alert("Settings Saved!"); loadAll(); }
+
+function backupData() {
+    let backupObj = { auth: auth, products: products, history: historyData, settings: settings, invoiceNumber: invoiceNumber };
+    let dataStr = JSON.stringify(backupObj, null, 2);
+    let blob = new Blob([dataStr], { type: "application/json" });
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = `JohnnyTelecom_Backup_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function restoreData(event) {
+    let file = event.target.files[0];
+    if (!file) return;
+    if (!confirm("⚠️ WARNING: Restoring data will OVERWRITE all your current data. Continue?")) { document.getElementById("restoreFile").value = ""; return; }
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let data = JSON.parse(e.target.result);
+            if (data.auth) { auth = data.auth; localStorage.setItem("auth", JSON.stringify(auth)); }
+            if (data.products) products = data.products;
+            if (data.history) historyData = data.history;
+            if (data.settings) settings = data.settings;
+            if (data.invoiceNumber) invoiceNumber = data.invoiceNumber;
+            saveDB(); loadAll(); alert("✅ Data Restored Successfully!");
+            document.getElementById("restoreFile").value = ""; 
+        } catch (error) {
+            alert("❌ Error: Invalid backup file format.");
+            document.getElementById("restoreFile").value = "";
+        }
+    };
+    reader.readAsText(file);
+}
+
+// Boot up sequence
+checkAuth();
+
+</script>
+</body>
+</html>
